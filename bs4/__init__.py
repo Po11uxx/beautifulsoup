@@ -53,6 +53,8 @@ __all__ = [
 from collections import Counter
 import sys
 import warnings
+from .replacer import SoupReplacer
+# from .builder import ReplacerTreeBuilderMixin
 
 # The very first thing we do is give a useful error if someone is
 # running this code under Python 2.
@@ -215,6 +217,7 @@ class BeautifulSoup(Tag):
         from_encoding: Optional[_Encoding] = None,
         exclude_encodings: Optional[_Encodings] = None,
         element_classes: Optional[Dict[Type[PageElement], Type[PageElement]]] = None,
+        replacer: Optional[SoupReplacer]=None,
         **kwargs: Any,
     ):
         """Constructor.
@@ -350,6 +353,13 @@ class BeautifulSoup(Tag):
         original_features = features
 
         builder_class: Type[TreeBuilder]
+
+        # if replacer:
+        #     from bs4.builder import ReplacerTreeBuilderMixin
+        #     original_builder_class = builder.__class__
+        #     builder = type('ReplacerBuilder',
+        #                    (ReplacerTreeBuilderMixin, original_builder_class),
+        #                    {})(replacer, builder.parser, builder.store_line_numbers)
         if isinstance(builder, type):
             # A builder class was passed in; it needs to be instantiated.
             builder_class = builder
@@ -488,6 +498,19 @@ class BeautifulSoup(Tag):
         # reference to this object.
         self.markup = None
         self.builder.soup = None
+
+        self.replacer = replacer
+        if self.replacer:
+            self._replace_tags_immediately()
+
+    def _replace_tags_immediately(self):
+        og_tag = self.replacer.og_tag
+        alt_tag = self.replacer.alt_tag
+
+        tags_to_replace = self.find_all(og_tag)
+
+        for tag in tags_to_replace:
+            tag.name = alt_tag
 
     def copy_self(self) -> "BeautifulSoup":
         """Create a new BeautifulSoup object with the same TreeBuilder,

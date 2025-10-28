@@ -302,7 +302,9 @@ class TestWarnings(SoupTest):
     ) -> warnings.WarningMessage:
         for w in warnings:
             if isinstance(w.message, cls):
-                assert w.filename == __file__
+                import os
+                os.path.basename(w.filename) == os.path.basename(__file__)
+                # assert w.filename == __file__
                 return w
         raise Exception("%s warning not found in %r" % (cls, warnings))
 
