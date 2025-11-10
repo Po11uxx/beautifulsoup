@@ -53,7 +53,6 @@ __all__ = [
 from collections import Counter
 import sys
 import warnings
-from .replacer import SoupReplacer
 # from .builder import ReplacerTreeBuilderMixin
 
 # The very first thing we do is give a useful error if someone is
@@ -217,9 +216,29 @@ class BeautifulSoup(Tag):
         from_encoding: Optional[_Encoding] = None,
         exclude_encodings: Optional[_Encodings] = None,
         element_classes: Optional[Dict[Type[PageElement], Type[PageElement]]] = None,
-        replacer: Optional[SoupReplacer]=None,
+        replacer = None,
         **kwargs: Any,
     ):
+        # replacer
+        self.replacer = replacer
+
+        if isinstance(builder, type):
+            builder = builder()
+        if builder is None:
+            builder_class = builder_registry.lookup(features)
+            if builder_class is None:
+                raise FeatureNotFound(
+                    "Couldn't find a tree builder with the features you requested: %s"
+                    % features
+                )
+            builder = builder_class()
+        self.builder = builder
+        self.is_xml = builder.is_xml
+
+        self.reset()
+        self.hidden = True
+        self.parse_only = parse_only
+        self.builder.initialize_soup(self)
         """Constructor.
 
         :param markup: A string or a file-like object representing
@@ -499,19 +518,6 @@ class BeautifulSoup(Tag):
         self.markup = None
         self.builder.soup = None
 
-        self.replacer = replacer
-        if self.replacer:
-            self._replace_tags_immediately()
-
-    def _replace_tags_immediately(self):
-        og_tag = self.replacer.og_tag
-        alt_tag = self.replacer.alt_tag
-
-        tags_to_replace = self.find_all(og_tag)
-
-        for tag in tags_to_replace:
-            tag.name = alt_tag
-
     def copy_self(self) -> "BeautifulSoup":
         """Create a new BeautifulSoup object with the same TreeBuilder,
         but not associated with any markup.
@@ -551,6 +557,9 @@ class BeautifulSoup(Tag):
             # parse tree, so use a default we know is always available.
             self.builder = HTMLParserTreeBuilder()
         self.builder.soup = self
+        # self.replacer = replacer
+        self.replacer = state.get('replacer')
+        self.builder.replacer = replacer
         self.reset()
         self._feed()
 

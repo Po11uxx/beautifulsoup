@@ -217,6 +217,7 @@ class TreeBuilder(object):
         attribute_dict_class: Type[AttributeDict] = AttributeDict,
         attribute_value_list_class: Type[AttributeValueList] = AttributeValueList,
     ):
+        # self.replacer = None
         self.soup = None
         if multi_valued_attributes is self.USE_DEFAULT:
             multi_valued_attributes = self.DEFAULT_CDATA_LIST_ATTRIBUTES

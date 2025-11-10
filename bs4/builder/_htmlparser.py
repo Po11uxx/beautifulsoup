@@ -31,7 +31,7 @@ from bs4.element import (
     Comment,
     Declaration,
     Doctype,
-    ProcessingInstruction,
+    ProcessingInstruction, Tag,
 )
 from bs4.dammit import EntitySubstitution, UnicodeDammit
 
@@ -151,6 +151,10 @@ class BeautifulSoupHTMLParser(HTMLParser, DetectsXMLParsedAsHTML):
             an empty-element tag (i.e. there is not expected to be any
             closing tag).
         """
+        # replacer
+        if hasattr(self.soup, "replacer") and self.soup.replacer:
+            name = self.soup.replacer.replace(name)
+
         # TODO: handle namespaces here?
         attr_dict: AttributeDict = self.attribute_dict_class()
         for key, value in attrs:
@@ -182,6 +186,21 @@ class BeautifulSoupHTMLParser(HTMLParser, DetectsXMLParsedAsHTML):
         tag = self.soup.handle_starttag(
             name, None, None, attr_dict, sourceline=sourceline, sourcepos=sourcepos
         )
+
+        replacer = getattr(self.soup, "replacer", None)
+        if replacer and tag is not None:
+            if callable(getattr(replacer, "name_xformer", None)) and replacer.name_xformer:
+                tag.name = replacer.name_xformer(tag)
+            if callable(getattr(replacer, "attrs_xformer", None)) and replacer.attrs_xformer:
+                tag.attrs = replacer.attrs_xformer(tag)
+            if callable(getattr(replacer, "xformer", None)) and replacer.xformer:
+                replacer.xformer(tag)
+            elif getattr(replacer, "og_tag", None) and getattr(replacer, "alt_tag", None):
+                if tag.name == replacer.og_tag:
+                    tag.name = replacer.alt_tag
+
+        handle_empty_element = True
+
         if tag and tag.is_empty_element and handle_empty_element:
             # Unlike other parsers, html.parser doesn't send separate end tag
             # events for empty-element tags. (It's handled in
@@ -373,6 +392,7 @@ class HTMLParserTreeBuilder(HTMLTreeBuilder):
         parser_kwargs.update(extra_parser_kwargs)
         parser_kwargs["convert_charrefs"] = False
         self.parser_args = (parser_args, parser_kwargs)
+        self.replacer = None
 
     def prepare_markup(
         self,

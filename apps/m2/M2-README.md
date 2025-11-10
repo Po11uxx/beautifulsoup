@@ -47,5 +47,4 @@
 ## Part 3 - SoupReplacer
 `apps/m2/task6.py`
 - ```bash
-   cd apps/m2
-   python -m apps.m2.task6 ./apps/m2/wiki_python.html b blockquote
+   python -m apps.m2.task6 ./apps/m2/wiki_python.html ./apps/m2/replaced_wiki_python.html b blockquote

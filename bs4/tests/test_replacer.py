@@ -1,5 +1,5 @@
 from .. import BeautifulSoup
-from ..replacer import SoupReplacer
+from ..filter import SoupReplacer
 
 def test_simple_replacement():
     html = "<html><body><b>Bold text</b></body></html>"
