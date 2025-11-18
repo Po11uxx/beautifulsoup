@@ -222,8 +222,11 @@ class BeautifulSoup(Tag):
         # replacer
         self.replacer = replacer
 
+        # If builder is a class, instantiate it.
         if isinstance(builder, type):
             builder = builder()
+
+        # If no builder specified, find one based on requested parser features.
         if builder is None:
             builder_class = builder_registry.lookup(features)
             if builder_class is None:
@@ -231,13 +234,18 @@ class BeautifulSoup(Tag):
                     "Couldn't find a tree builder with the features you requested: %s"
                     % features
                 )
+            # Instantiate the resolved builder.
             builder = builder_class()
         self.builder = builder
         self.is_xml = builder.is_xml
 
+        # Reset internal state before parsing.
         self.reset()
+        # Mark the document as hidden until fully parsed.
         self.hidden = True
+        # Optional: filter for which parts of the tree to parse.
         self.parse_only = parse_only
+        # Let the builder initialize internal hooks on the soup instance.
         self.builder.initialize_soup(self)
         """Constructor.
 

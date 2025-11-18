@@ -189,12 +189,16 @@ class BeautifulSoupHTMLParser(HTMLParser, DetectsXMLParsedAsHTML):
 
         replacer = getattr(self.soup, "replacer", None)
         if replacer and tag is not None:
+            # If name_xformer is a callable, use it to update tag.name
             if callable(getattr(replacer, "name_xformer", None)) and replacer.name_xformer:
                 tag.name = replacer.name_xformer(tag)
+            # If attrs_xformer is a callable, use it to update the attribute dict
             if callable(getattr(replacer, "attrs_xformer", None)) and replacer.attrs_xformer:
                 tag.attrs = replacer.attrs_xformer(tag)
+            # If xformer exists, call it to modify the tag directly
             if callable(getattr(replacer, "xformer", None)) and replacer.xformer:
                 replacer.xformer(tag)
+            # Fallback: legacy og_tag → alt_tag replacement
             elif getattr(replacer, "og_tag", None) and getattr(replacer, "alt_tag", None):
                 if tag.name == replacer.og_tag:
                     tag.name = replacer.alt_tag
