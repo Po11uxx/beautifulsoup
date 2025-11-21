@@ -526,6 +526,25 @@ class BeautifulSoup(Tag):
         self.markup = None
         self.builder.soup = None
 
+    def __iter__(self):
+        """
+        Iterate over all nodes in the parse tree.
+        DFS traversal. Does not materialize the nodes into a list.
+        """
+        yield from self._traverse(self)
+
+    def _traverse(self, node):
+        """
+        Depth-first traversal generator.
+        Yields the node itself, then recursively yields its children.
+        """
+        yield node
+
+        # Only Tag objects have .contents
+        if hasattr(node, "contents"):
+            for child in node.contents:
+                yield from self._traverse(child)
+
     def copy_self(self) -> "BeautifulSoup":
         """Create a new BeautifulSoup object with the same TreeBuilder,
         but not associated with any markup.
